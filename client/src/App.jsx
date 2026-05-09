@@ -1,0 +1,101 @@
+import { useState, useEffect } from "react";
+import socket from "./socket";
+import Home from "./components/Home";
+import Lobby from "./components/Lobby";
+import Race from "./components/Race";
+import Results from "./components/Results";
+
+// Screens: 'home' | 'lobby' | 'race' | 'results'
+export default function App() {
+  const [screen, setScreen] = useState("home");
+  const [roomState, setRoomState] = useState(null);
+  const [playerName, setPlayerName] = useState("");
+  const [countdown, setCountdown] = useState(null);
+  const [myResult, setMyResult] = useState(null);
+
+  useEffect(() => {
+    // Global socket event listeners
+    socket.on("room_update", (state) => {
+      setRoomState(state);
+      // If the room goes back to waiting (rematch), go to lobby
+      if (state.status === "waiting" && screen === "results") {
+        setScreen("lobby");
+        setMyResult(null);
+      }
+    });
+
+    socket.on("countdown", (n) => {
+      setCountdown(n);
+    });
+
+    socket.on("race_start", () => {
+      setCountdown(null);
+      setScreen("race");
+    });
+
+    socket.on("player_finished", (result) => {
+      setMyResult(result);
+    });
+
+    socket.on("race_finished", ({ results }) => {
+      setScreen("results");
+    });
+
+    socket.on("rematch", (state) => {
+      setRoomState(state);
+      setMyResult(null);
+      setScreen("lobby");
+    });
+
+    return () => {
+      socket.off("room_update");
+      socket.off("countdown");
+      socket.off("race_start");
+      socket.off("player_finished");
+      socket.off("race_finished");
+      socket.off("rematch");
+    };
+  }, [screen]);
+
+  const handleJoined = (state, name) => {
+    setRoomState(state);
+    setPlayerName(name);
+    setScreen("lobby");
+  };
+
+  const handleRematch = () => {
+    socket.emit("request_rematch");
+  };
+
+  return (
+    <div className="min-h-screen bg-bg text-[#d1d0c5] font-mono">
+      {screen === "home" && <Home onJoined={handleJoined} />}
+
+      {screen === "lobby" && roomState && (
+        <Lobby
+          roomState={roomState}
+          playerName={playerName}
+          countdown={countdown}
+          onStartRace={() => socket.emit("start_race")}
+        />
+      )}
+
+      {screen === "race" && roomState && (
+        <Race
+          roomState={roomState}
+          playerName={playerName}
+          myResult={myResult}
+        />
+      )}
+
+      {screen === "results" && roomState && (
+        <Results
+          roomState={roomState}
+          playerName={playerName}
+          myResult={myResult}
+          onRematch={handleRematch}
+        />
+      )}
+    </div>
+  );
+}
