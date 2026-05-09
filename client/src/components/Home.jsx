@@ -1,6 +1,6 @@
 const API_URL =
   import.meta.env.MODE === "production"
-    ? "https://typebattle-server.onrender.com"
+    ? "https://typebattle-0u8i.onrender.com"
     : "";
 
 import { useState } from "react";
