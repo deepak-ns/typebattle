@@ -4,15 +4,15 @@ import { useTypingEngine } from "../hooks/useTypingEngine";
 import ProgressBar from "./ProgressBar";
 
 export default function Race({ roomState, playerName, myResult }) {
-  // Local passage state so we can swap it in timed mode without a room update
   const [passage, setPassage] = useState(roomState?.passage || "");
   const players = roomState?.players || [];
   const isTimed = roomState?.mode === "timed";
   const duration = roomState?.duration || 60;
   const [timeLeft, setTimeLeft] = useState(duration);
   const timerRef = useRef(null);
+  const inputRef = useRef(null); // ← hidden input ref
 
-  // Listen for new passage (timed mode only — when player finishes current text)
+  // Listen for new passage (timed mode)
   useEffect(() => {
     socket.on("new_passage", ({ passage: newPassage }) => {
       setPassage(newPassage);
@@ -44,29 +44,65 @@ export default function Race({ roomState, playerName, myResult }) {
   );
 
   const { chars, wpm, accuracy, finished, handleKeyDown } = useTypingEngine(
-    passage, // ← uses local state now, not roomState.passage directly
+    passage,
     sendProgress,
   );
 
+  // Keep the hidden input focused at all times
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    const focusInput = () => {
+      if (inputRef.current) inputRef.current.focus();
+    };
+
+    focusInput(); // focus on mount
+
+    // Refocus if user taps anywhere on the page
+    document.addEventListener("click", focusInput);
+    document.addEventListener("touchend", focusInput);
+
+    return () => {
+      document.removeEventListener("click", focusInput);
+      document.removeEventListener("touchend", focusInput);
+    };
+  }, []);
 
   const myPlayer = players.find((p) => p.name === playerName);
   const opponents = players.filter((p) => p.name !== playerName);
   const timerColor =
     timeLeft > 10 ? "#4ade80" : timeLeft > 5 ? "#e2b714" : "#f87171";
 
-  // rest of the JSX stays exactly the same as before...;
-
   return (
     <div className="flex flex-col min-h-screen px-4 py-10 max-w-3xl mx-auto gap-8">
+      {/*
+        Hidden input — invisible but focused so the mobile keyboard stays open.
+        onKeyDown handles the typing logic same as before.
+        readOnly={false} and value="" with onChange={()=>{}} keeps it empty
+        so the input never shows typed text, just captures key events.
+      */}
+      <input
+        ref={inputRef}
+        onKeyDown={handleKeyDown}
+        onChange={() => {}} // suppress React warning
+        value=""
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
+        style={{
+          position: "fixed",
+          opacity: 0,
+          top: 0,
+          left: 0,
+          width: "1px",
+          height: "1px",
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-accent font-bold text-xl">TypeBattle</h1>
         <div className="flex gap-6 text-sm items-center">
-          {/* Timed countdown */}
           {isTimed && (
             <span
               className="text-2xl font-bold tabular-nums transition-colors"
@@ -94,12 +130,20 @@ export default function Race({ roomState, playerName, myResult }) {
         ))}
       </div>
 
+      {/* Tap to type hint for mobile */}
+      <p
+        className="text-accent text-xs text-center -mb-4 md:hidden"
+        onClick={() => inputRef.current?.focus()}
+      >
+        tap here if keyboard closes
+      </p>
+
       {/* Typing area */}
       <div
-        className="bg-surface border border-border rounded-xl p-6 relative"
+        className="bg-surface border border-border rounded-xl p-6 relative cursor-text"
         style={{ minHeight: 140 }}
+        onClick={() => inputRef.current?.focus()} // tap passage to refocus
       >
-        {/* Classic mode: show finish overlay. Timed mode: keep typing until timer ends */}
         {!isTimed && finished && myResult && (
           <div className="absolute inset-0 flex items-center justify-center bg-surface/90 rounded-xl z-10">
             <div className="text-center">
@@ -114,7 +158,6 @@ export default function Race({ roomState, playerName, myResult }) {
           </div>
         )}
 
-        {/* Timed mode: time's up overlay */}
         {isTimed && timeLeft === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-surface/90 rounded-xl z-10">
             <div className="text-center">
