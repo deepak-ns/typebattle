@@ -5,6 +5,11 @@ import Lobby from "./components/Lobby";
 import Race from "./components/Race";
 import Results from "./components/Results";
 
+const addClientMessageTime = (message) => ({
+  ...message,
+  clientCreatedAt: message.clientCreatedAt || Date.now(),
+});
+
 // Screens: 'home' | 'lobby' | 'race' | 'results'
 export default function App() {
   const [screen, setScreen] = useState("home");
@@ -43,7 +48,7 @@ export default function App() {
     });
 
     socket.on("new_message", (message) => {
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...prev, addClientMessageTime(message)]);
     });
 
     socket.on("rematch", (state) => {
@@ -66,7 +71,7 @@ export default function App() {
   const handleJoined = (state, name, chatHistory = []) => {
     setRoomState(state);
     setPlayerName(name);
-    setMessages(chatHistory);
+    setMessages(chatHistory.map(addClientMessageTime));
     setScreen("lobby");
   };
 

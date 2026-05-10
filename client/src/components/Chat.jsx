@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import socket from "../socket";
 
+const formatMessageTime = (message) => {
+  const timestamp = message.clientCreatedAt || message.createdAt || message.time;
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return typeof timestamp === "string" ? timestamp : "";
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 export default function Chat({
   playerName,
   messages = [],
@@ -44,6 +57,7 @@ export default function Chat({
         )}
         {messages.map((msg) => {
           const isMe = msg.name === playerName;
+          const messageTime = formatMessageTime(msg);
           return (
             <div
               key={msg.id}
@@ -55,7 +69,9 @@ export default function Chat({
                 >
                   {isMe ? "you" : msg.name}
                 </span>
-                <span className="text-muted text-xs">{msg.time}</span>
+                {messageTime && (
+                  <span className="text-muted text-xs">{messageTime}</span>
+                )}
               </div>
               <div
                 className={`px-3 py-2 rounded-xl text-sm max-w-xs break-words ${

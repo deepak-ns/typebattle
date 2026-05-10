@@ -242,10 +242,6 @@ io.on("connection", (socket) => {
       id: `${socket.id}-${Date.now()}`,
       name: currentName,
       message: message.trim().slice(0, 200),
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
     };
 
     if (!room.messages) room.messages = [];
