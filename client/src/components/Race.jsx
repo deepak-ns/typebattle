@@ -4,21 +4,12 @@ import { useTypingEngine } from "../hooks/useTypingEngine";
 import ProgressBar from "./ProgressBar";
 
 export default function Race({ roomState, playerName, myResult }) {
-  // Local passage state so we can swap it in timed mode without a room update
-  const [passage, setPassage] = useState(roomState?.passage || "");
+  const passage = roomState?.passage || "";
   const players = roomState?.players || [];
   const isTimed = roomState?.mode === "timed";
   const duration = roomState?.duration || 60;
   const [timeLeft, setTimeLeft] = useState(duration);
   const timerRef = useRef(null);
-
-  // Listen for new passage (timed mode only — when player finishes current text)
-  useEffect(() => {
-    socket.on("new_passage", ({ passage: newPassage }) => {
-      setPassage(newPassage);
-    });
-    return () => socket.off("new_passage");
-  }, []);
 
   // Visual countdown
   useEffect(() => {
@@ -58,40 +49,33 @@ export default function Race({ roomState, playerName, myResult }) {
   const timerColor =
     timeLeft > 10 ? "#4ade80" : timeLeft > 5 ? "#e2b714" : "#f87171";
 
-  // rest of the JSX stays exactly the same as before...;
-
   return (
-    <div className="flex flex-col min-h-screen px-4 py-10 max-w-3xl mx-auto gap-8">
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden px-4 py-6 max-w-3xl mx-auto gap-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-accent font-bold text-xl">TypeBattle</h1>
-        <div className="flex gap-6 text-sm items-center">
-          {/* Timed countdown */}
-          {isTimed && (
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-lg text-center">
+        {isTimed && (
+          <span className="font-semibold text-accent">
+            <span className="text-muted text-base">time left </span>
             <span
-              className="text-2xl font-bold tabular-nums transition-colors"
+              className="tabular-nums text-2xl"
               style={{ color: timerColor }}
             >
               {timeLeft}s
             </span>
-          )}
-          <span>
-            <span className="text-muted">wpm </span>
-            <span className="text-accent font-bold">{wpm}</span>
           </span>
-          <span>
-            <span className="text-muted">acc </span>
-            <span className="text-[#d1d0c5] font-bold">{accuracy}%</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Progress bars */}
-      <div className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-1">
-        {myPlayer && <ProgressBar player={myPlayer} isMe={true} />}
-        {opponents.map((p) => (
-          <ProgressBar key={p.id} player={p} isMe={false} />
-        ))}
+        )}
+        <span className="font-semibold text-accent">
+          <span className="text-muted text-base">wpm </span>
+          <span className="text-2xl">{myPlayer?.wpm || 0}</span>
+        </span>
+        <span className="font-semibold text-[#d1d0c5]">
+          <span className="text-muted text-base">acc </span>
+          <span className="text-2xl">{accuracy}%</span>
+        </span>
       </div>
 
       {/* Typing area */}
@@ -160,6 +144,14 @@ export default function Race({ roomState, playerName, myResult }) {
           ? `type as much as you can in ${duration} seconds`
           : "just start typing · backspace to correct"}
       </p>
+
+      {/* Progress bars */}
+      <div className="bg-surface border border-border rounded-xl p-4 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        {myPlayer && <ProgressBar player={myPlayer} isMe={true} />}
+        {opponents.map((p) => (
+          <ProgressBar key={p.id} player={p} isMe={false} />
+        ))}
+      </div>
     </div>
   );
 }

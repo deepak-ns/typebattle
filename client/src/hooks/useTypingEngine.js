@@ -38,6 +38,7 @@ export function useTypingEngine(passage, onProgress) {
       }
 
       if (e.key === "Backspace") {
+        e.preventDefault();
         setTyped((prev) => {
           const next = prev.slice(0, -1);
           return next;
@@ -51,6 +52,7 @@ export function useTypingEngine(passage, onProgress) {
       }
 
       if (e.key.length !== 1) return; // Ignore arrows, F-keys, etc.
+      e.preventDefault();
 
       const currentIndex = typed.length;
       const expected = passage[currentIndex];

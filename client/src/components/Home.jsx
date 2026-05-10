@@ -11,7 +11,7 @@ export default function Home({ onJoined }) {
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [mode, setMode] = useState("classic");
+  const [mode, setMode] = useState("timed");
   const [duration, setDuration] = useState(30);
 
   const joinRoom = (code) => {
@@ -76,7 +76,7 @@ export default function Home({ onJoined }) {
           <label className="text-sm text-muted mb-2 block">your name</label>
           <input
             className="w-full bg-bg border border-border rounded-lg px-4 py-3 text-[#d1d0c5] focus:outline-none focus:border-accent transition-colors"
-            placeholder="speedtyper99"
+            placeholder="enter your name"
             value={name}
             maxLength={20}
             onChange={(e) => setName(e.target.value)}
@@ -87,7 +87,7 @@ export default function Home({ onJoined }) {
         <div>
           <label className="text-sm text-muted mb-2 block">race mode</label>
           <div className="flex gap-2">
-            {["classic", "timed"].map((m) => (
+            {["timed", "classic"].map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}

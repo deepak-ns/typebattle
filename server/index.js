@@ -166,13 +166,15 @@ io.on("connection", (socket) => {
     updatePlayer(currentRoom, socket.id, { wpm, progress, accuracy });
 
     if (room.mode === "timed") {
-      // In timed mode: if player finishes the passage, send them a new one
-      if (typedLength >= room.passage.length) {
-        const newPassage = getRandomPassage();
-        // Send new passage only to this player
-        socket.emit("new_passage", { passage: newPassage });
+      if (
+        typedLength >= room.passage.length &&
+        !room.players[socket.id]?.finished
+      ) {
+        updatePlayer(currentRoom, socket.id, {
+          finished: true,
+          finishTime: Date.now(),
+        });
       }
-      // Always broadcast updated progress
       io.to(currentRoom).emit("room_update", getPublicState(room));
     } else {
       // Classic mode logic (unchanged)
