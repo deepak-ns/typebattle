@@ -97,7 +97,7 @@ export default function App() {
         />
       )}
 
-      <p className="fixed bottom-4 left-1/2 -translate-x-1/2 text-center text-xs text-muted">
+      <p className="fixed bottom-4 right-4 text-right text-xs text-muted">
         developed by deepak-ns
       </p>
     </div>
