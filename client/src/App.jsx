@@ -68,7 +68,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-[#d1d0c5] font-mono">
+    <div className="relative min-h-screen bg-bg text-[#d1d0c5] font-mono">
       {screen === "home" && <Home onJoined={handleJoined} />}
 
       {screen === "lobby" && roomState && (
@@ -96,6 +96,10 @@ export default function App() {
           onRematch={handleRematch}
         />
       )}
+
+      <p className="fixed bottom-4 left-1/2 -translate-x-1/2 text-center text-xs text-muted">
+        developed by deepak-ns
+      </p>
     </div>
   );
 }
