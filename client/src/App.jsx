@@ -12,6 +12,7 @@ export default function App() {
   const [playerName, setPlayerName] = useState("");
   const [countdown, setCountdown] = useState(null);
   const [myResult, setMyResult] = useState(null);
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     // Global socket event listeners
@@ -41,6 +42,10 @@ export default function App() {
       setScreen("results");
     });
 
+    socket.on("new_message", (message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
     socket.on("rematch", (state) => {
       setRoomState(state);
       setMyResult(null);
@@ -53,13 +58,15 @@ export default function App() {
       socket.off("race_start");
       socket.off("player_finished");
       socket.off("race_finished");
+      socket.off("new_message");
       socket.off("rematch");
     };
   }, [screen]);
 
-  const handleJoined = (state, name) => {
+  const handleJoined = (state, name, chatHistory = []) => {
     setRoomState(state);
     setPlayerName(name);
+    setMessages(chatHistory);
     setScreen("lobby");
   };
 
@@ -77,6 +84,7 @@ export default function App() {
           playerName={playerName}
           countdown={countdown}
           onStartRace={() => socket.emit("start_race")}
+          messages={messages}
         />
       )}
 
@@ -94,6 +102,7 @@ export default function App() {
           playerName={playerName}
           myResult={myResult}
           onRematch={handleRematch}
+          messages={messages}
         />
       )}
 

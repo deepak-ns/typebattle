@@ -86,7 +86,11 @@ io.on("connection", (socket) => {
     // Tell everyone in the room about the new player list
     io.to(code).emit("room_update", getPublicState(room));
 
-    callback({ success: true, room: getPublicState(room) });
+    callback({
+      success: true,
+      room: getPublicState(room),
+      messages: room.messages || [],
+    });
     console.log(`[${code}] ${currentName} joined`);
   });
 
@@ -226,6 +230,29 @@ io.on("connection", (socket) => {
 
     io.to(currentRoom).emit("rematch", getPublicState(room));
     console.log(`[${currentRoom}] Rematch started`);
+  });
+
+  socket.on("send_message", ({ message }) => {
+    if (!currentRoom) return;
+    const room = getRoom(currentRoom);
+    if (!room) return;
+    if (!message || !message.trim()) return;
+
+    const chatMessage = {
+      id: `${socket.id}-${Date.now()}`,
+      name: currentName,
+      message: message.trim().slice(0, 200),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    if (!room.messages) room.messages = [];
+    room.messages.push(chatMessage);
+    if (room.messages.length > 50) room.messages.shift();
+
+    io.to(currentRoom).emit("new_message", chatMessage);
   });
 
   // Cleanup on disconnect

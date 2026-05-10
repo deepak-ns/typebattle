@@ -19,7 +19,7 @@ export default function Home({ onJoined }) {
       if (!socket.connected) socket.connect();
       socket.emit("join_room", { roomCode: code, name }, (res) => {
         if (res.error) reject(res.error);
-        else resolve(res.room);
+        else resolve({ room: res.room, messages: res.messages || [] });
       });
     });
   };
@@ -35,8 +35,8 @@ export default function Home({ onJoined }) {
         body: JSON.stringify({ mode, duration }), // ← send mode + duration
       });
       const data = await res.json();
-      const roomState = await joinRoom(data.code);
-      onJoined(roomState, name.trim());
+      const { room, messages } = await joinRoom(data.code);
+      onJoined(room, name.trim(), messages);
     } catch (e) {
       setError(typeof e === "string" ? e : "Failed to create room");
     } finally {
@@ -50,8 +50,8 @@ export default function Home({ onJoined }) {
     setLoading(true);
     setError("");
     try {
-      const roomState = await joinRoom(joinCode.trim().toUpperCase());
-      onJoined(roomState, name.trim());
+      const { room, messages } = await joinRoom(joinCode.trim().toUpperCase());
+      onJoined(room, name.trim(), messages);
     } catch (e) {
       setError(typeof e === "string" ? e : "Failed to join room");
     } finally {
