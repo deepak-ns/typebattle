@@ -34,6 +34,11 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
+// Health endpoint for uptime pings (cron-job.org, UptimeRobot, etc.)
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // In production, serve the built React app
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/dist")));
